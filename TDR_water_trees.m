@@ -4,6 +4,7 @@ clc;
 
 %% Local Water Tree Model
 e_0 = 8.85e-12;
+c = 3e8;                                    % speed of light m/s
 f = 60;                                     % Hz
 w = 2*pi*f;                                 % rad/s
 cond_water = 1e-7;                          % conductivity of water
@@ -42,11 +43,29 @@ R = 1/(pi*r_in^2*cond_cu);                  % Resistance of conductor (ohms/m)
 G = real(2*pi*f*C_ins);                     % Conductance of insulation (S/m)
 
 % Model Length 
-length = 100;                               % 100 meter cable
+length = .01;                               % 1 centimeter PUL set up
 deg_coef = .2;                              % 20 meters of cable is degraded due to water tree
 
-Z_good = (1-.2)*((R + i*w*L)/(G + i*w*C_ins))^.5;   % good condition cable chracteristic impedance (ohms)
-Z_deg = .2*((R + i*w*L)/(G + i*w*C_ins))^.5;        % degraded cables characteristic impedance     (ohms)
+Z_good = ((R + i*w*L)/(G + i*w*C_ins))^.5;   % good condition cable chracteristic impedance (ohms)
+Z_deg = ((R_deg + i*w*L_deg)/(G_deg + i*w*C_ins_deg))^.5;        % degraded cables characteristic impedance     (ohms)
 
 Z_L = 50;                                           % terminating load (ohms)
+
+v_p = 1/(L*C_ins)^.5;                           % propagation velocity of good condition
+v_p_deg = 1/(L_deg*C_ins_deg)^.5;               % propagation velocity of water treed region
+
+gamma_good = ((R + i*w*L)*(G + i*w*C_ins))^.5;                  % proagation constant good
+gamma_deg = ((R_deg + i*w*L_deg)*(G_deg + i*w*C_ins_deg))^.5;   % propagation constant wter treed
+
+a11 = cosh(gamma_good*length); 
+a12 = Z_good*sinh(gamma_good*length);
+a21 = 1/Z_good*sinh(gamma_good*length);
+a22 = cosh(gamma_good*length);
+
+T1 = [a11 a12;                                          % ABCD parameters for good section of cable
+      a21 a22];   
+
+Z_trans = (a12/a21)^.5;                                 % overall characteristic impedance of line
+v_trans = length * 1/(imag(a12)*imag(a21)/w^2)^.5;      % overall propagation velocity of line
+gamma_trans = 1/length * (a12*a21)^.5;                  % overall propagation constant of line
 
